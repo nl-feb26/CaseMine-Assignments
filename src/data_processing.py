@@ -13,18 +13,23 @@ def preprocess_text(text):
     text = re.sub(r'[^\w\s]', '', text)
     return text.lower()
 
-# Load IMDB dataset
+# Load and preprocess the IMDB dataset
 def load_data():
-    df = pd.read_csv('https://datasets.imdbws.com/title.basics.tsv.gz', delimiter='\t', low_memory=False)
-    df = df[['primaryTitle', 'isAdult', 'startYear']].dropna()  # Dropping unnecessary columns
-    df = df.sample(n=50000, random_state=42)  # Sampling 50K rows
+    df = pd.read_csv(r"D:\Projects\Datasets\IMDB Dataset.csv\IMDB Dataset.csv")
+    
+    # Sampling 50K rows (optional, you can use all data if desired)
+    df = df.sample(n=50000, random_state=42)
 
-    df['cleaned_text'] = df['primaryTitle'].apply(preprocess_text)
+    # Preprocess the review text
+    df['cleaned_text'] = df['review'].apply(preprocess_text)
 
+    # Tokenize using BERT tokenizer
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     df['tokenized'] = df['cleaned_text'].apply(lambda x: tokenizer.encode(x, truncation=True, padding='max_length'))
 
-    collection.insert_many(df.to_dict('records'))  # Load into MongoDB
+    # Insert into MongoDB
+    collection.insert_many(df.to_dict('records'))
+    
     return df
 
 if __name__ == "__main__":
